@@ -35,12 +35,20 @@ Example user flow:
 
 -A withdraw button allows user to withdraw - confirm with metamask
 
+
 Inspiration:
+
 -https://www.reaper.farm/
+
 -https://app.beefy.finance/#/fantom
+
 -https://spookyswap.finance/farms
+
 -https://app.spiritswap.finance/#/farms
+
 -https://solfarm.io/vaults
+
 -https://terra.spec.finance/vaults
+
 -https://www.tarot.to/
 
