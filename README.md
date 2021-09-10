@@ -7,7 +7,9 @@ a decentralized exchange like Uniswap or Sushiswap.
 The farm will allow the user to deposit, withdraw and to see the balance of the LP
 token and possibly any reward token.
 
+
 Optional features could be:
+
 -Autocompounding (selling of reward token and buyback of LP token + reinvesting at a scheduled interval)
 
 -Display of estimated daily, weekly, yearly yield
@@ -18,7 +20,9 @@ Optional features could be:
 
 -Extra farm info like TVL, your share of farm etc
 
+
 Example user flow:
+
 -User has already gotten the correct LP token
 
 -A button allows approval of the use of LP token by contract - confirm with metamask
