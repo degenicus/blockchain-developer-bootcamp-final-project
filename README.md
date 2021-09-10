@@ -9,17 +9,26 @@ token and possibly any reward token.
 
 Optional features could be:
 -Autocompounding (selling of reward token and buyback of LP token + reinvesting at a scheduled interval)
+
 -Display of estimated daily, weekly, yearly yield
+
 -A custom farm token with emission as a boosted reward
+
 -Zap feature that takes one token, for example ETH, swaps into equal halves required for LP token and conversion to LP token all in one step for the user
+
 -Extra farm info like TVL, your share of farm etc
 
 Example user flow:
 -User has already gotten the correct LP token
+
 -A button allows approval of the use of LP token by contract - confirm with metamask
+
 -A number input takes the number of LP tokens to be deposited
+
 -Deposit button will deposit the selected number of LP tokens to contract - confirm with metamask
+
 -User can see the balance of LP tokens in the farm
+
 -A withdraw button allows user to withdraw - confirm with metamask
 
 Inspiration:
