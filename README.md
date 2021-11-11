@@ -90,7 +90,7 @@ Example user flow:
 -A withdraw button allows user to withdraw - confirm with metamask
 
 
-Inspiration:
+ Inspiration:
 
 -https://www.reaper.farm/
 
