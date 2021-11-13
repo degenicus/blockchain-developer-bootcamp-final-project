@@ -10,9 +10,11 @@
 
 # testing
 /coverage
+/cache
 
 # production
 /build
+/src/artifacts
 
 # misc
 .DS_Store
