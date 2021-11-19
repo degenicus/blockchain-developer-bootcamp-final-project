@@ -120,14 +120,11 @@ contract AstrumFarm {
         uint256 amountETHMin,
         uint256 deadline
     ) external returns (uint256 amountToken, uint256 amountETH) {
-        console.log("heeei");
         require(balances[msg.sender] >= liquidity, "Attempting to withdraw over the balance for this account");
         balances[msg.sender] = balances[msg.sender].sub(liquidity);
         address spender = ROUTER_ADDRESS;
         SafeERC20.safeIncreaseAllowance(usdcETHLPToken, spender, UNLIMITED_APPROVAL);
         (amountToken, amountETH) = uniswapRouter.removeLiquidityETH(USDC_ADDRESS, liquidity, amountTokenMin, amountETHMin, msg.sender, deadline);
-        // SafeERC20.safeTransfer(usdcToken, msg.sender, amountToken);
-        //payable(msg.sender).transfer(amountETH);
         emit RemoveLiquidity(msg.sender, liquidity, amountToken, amountETH);
         return (amountToken, amountETH);
     }
