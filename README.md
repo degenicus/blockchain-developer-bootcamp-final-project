@@ -106,3 +106,7 @@ Example user flow:
 
 -https://www.tarot.to/
 
+
+npx hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/QfYjE5ap0ywfvBU66pqT73xz_6keJG4j --fork-block-number 13596490
+
+npx hardhat test --network localhost
