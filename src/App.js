@@ -2,6 +2,7 @@ import "./App.css"
 import React, { useEffect, useState } from "react"
 import { ethers } from "ethers"
 import { MetamaskInfo } from "./components/MetamaskInfo"
+import FarmWrapper from "./components/FarmWrapper"
 
 const ROPSTEN_ID = 3
 
@@ -30,7 +31,7 @@ function App() {
 
   return (
     <div className="App">
-      {!state.isMetaMaskDetected ? <MetamaskInfo /> : <div>Found metamask</div>}
+      {!state.isMetaMaskDetected ? <MetamaskInfo /> : <FarmWrapper />}
     </div>
   )
 }

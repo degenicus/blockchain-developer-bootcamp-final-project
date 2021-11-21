@@ -29,5 +29,9 @@ module.exports = {
         blockNumber: 13596490,
       },
     },
+    ropsten: {
+      url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.API_KEY}`,
+      accounts: [`${process.env.PRIVATE_KEY}`],
+    },
   },
 }
