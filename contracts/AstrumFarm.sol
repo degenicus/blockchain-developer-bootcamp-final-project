@@ -239,7 +239,10 @@ contract AstrumFarm {
         address spender = ROUTER_ADDRESS;
         address lpAddress = getPairAddress(tokenAddress, getWETHAddress());
         IERC20 usdcETHLPToken = IERC20(lpAddress);
-        SafeERC20.safeIncreaseAllowance(usdcETHLPToken, spender, UNLIMITED_APPROVAL);
+        uint256 allowance = usdcETHLPToken.allowance(address(this), spender);
+        if (allowance == 0) {
+            SafeERC20.safeIncreaseAllowance(usdcETHLPToken, spender, UNLIMITED_APPROVAL);
+        }
         (amountToken, amountETH) = uniswapRouter.removeLiquidityETH(tokenAddress, liquidity, amountTokenMin, amountETHMin, msg.sender, deadline);
         emit RemoveLiquidity(msg.sender, liquidity, amountToken, amountETH);
         return (amountToken, amountETH);
