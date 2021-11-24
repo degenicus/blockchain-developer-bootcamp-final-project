@@ -29,7 +29,7 @@ export default function RemoveLiquidity({ usdcAmount, ethAmount }) {
   const amountChanged = (event) => {
     const newAmount = event.target.value
     const toRemove = state.amountLPToRemove
-    if (newAmount !== toRemove && newAmount <= state.balanceLP) {
+    if (newAmount !== toRemove && newAmount <= state.balanceLP && newAmount >= 0) {
       setState({ ...state, amountLPToRemove: newAmount })
     }
   }
@@ -42,11 +42,13 @@ export default function RemoveLiquidity({ usdcAmount, ethAmount }) {
     await farm.removeLiquidityETH(toRemove, 0, 0, deadline)
   }
 
+  const formatEther = (eth) => ethers.utils.formatEther(eth)
+
   return (
     <div>
       <Stack spacing={2} direction="row">
         <div style={{ lineHeight: 3.2 }}>USDC in wallet: {usdcAmount}</div>
-        <div style={{ lineHeight: 3.2 }}>ETH in wallet: {ethAmount}</div>
+        <div style={{ lineHeight: 3.2 }}>ETH in wallet: {formatEther(ethAmount)}</div>
         <div style={{ lineHeight: 3.2 }}>Amount of LP: {state.balanceLP}</div>
       </Stack>
       <Stack spacing={2} direction="row">

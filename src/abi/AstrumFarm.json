@@ -139,11 +139,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "astrumAmount",
+        "name": "usdcAmount",
         "type": "uint256"
       }
     ],
-    "name": "getAmountsInETHToAstrum",
+    "name": "getAmountsInETHToUSDC",
     "outputs": [
       {
         "internalType": "uint256[]",
@@ -164,7 +164,7 @@
         "type": "address"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -210,7 +210,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "astrumAmount",
+        "name": "usdcAmount",
         "type": "uint256"
       },
       {
@@ -222,6 +222,19 @@
     "name": "swapETHForExactTokens",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "uniswapRouter",
+    "outputs": [
+      {
+        "internalType": "contract IUniswapV2Router01",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

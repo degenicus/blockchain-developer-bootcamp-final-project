@@ -11,7 +11,7 @@ export default function Swap({ usdcAmount, setUSDCAmount }) {
 
   const amountChanged = (event) => {
     const newAmount = event.target.value
-    if (newAmount !== state.swapUSDCAmount) {
+    if (newAmount !== state.swapUSDCAmount && newAmount >= 0) {
       setState({ ...state, swapUSDCAmount: newAmount })
     }
   }

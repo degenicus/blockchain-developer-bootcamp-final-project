@@ -7,7 +7,7 @@ import TabPanel from "@mui/lab/TabPanel"
 import Swap from "./Swap"
 import AddLiquidity from "./AddLiquidity"
 import RemoveLiquidity from "./RemoveLiquidity"
-import { getUSDCBalance } from "../helpers"
+import { getUSDCBalance, getETHBalance } from "../helpers"
 import { ethers } from "ethers"
 import { getFarmContract } from "../helpers"
 
@@ -23,6 +23,16 @@ export default function FarmWrapper() {
     setState({ ...state, tab: newValue })
   }
 
+  const updateETHAndUSDC = async () => {
+    const usdcBalance = await getUSDCBalance()
+    const ethBalance = await getETHBalance()
+    setState({
+      ...state,
+      usdcAmount: Number(usdcBalance),
+      ethAmount: ethBalance,
+    })
+  }
+
   useEffect(() => {
     if (state.usdcAmount == null) {
       async function fetchUSDCData() {
@@ -33,13 +43,9 @@ export default function FarmWrapper() {
     }
     if (state.ethAmount == null) {
       async function fetchETHData() {
-        const provider = new ethers.providers.Web3Provider(window.ethereum)
-        const signer = provider.getSigner()
-        const userAddress = await signer.getAddress()
-        const balance = await provider.getBalance(userAddress)
+        const balance = await getETHBalance()
         const formattedBalance = ethers.utils.formatEther(balance)
-        console.log(typeof formattedBalance)
-        setState({ ...state, ethAmount: formattedBalance })
+        setState({ ...state, ethAmount: balance })
       }
       fetchETHData()
     }
@@ -87,6 +93,7 @@ export default function FarmWrapper() {
             ethAmount={state.ethAmount}
             setUSDCAmount={setUSDCAmount}
             ethToUSDCRatio={state.ethToUSDCRatio}
+            updateETHAndUSDC={updateETHAndUSDC}
           />
         </TabPanel>
         <TabPanel value="3">

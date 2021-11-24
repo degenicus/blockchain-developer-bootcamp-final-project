@@ -5,10 +5,17 @@ import Stack from "@mui/material/Stack"
 import { ethers } from "ethers"
 import { getUSDCBalance, getUSDCContract, getFarmContract } from "../helpers"
 
-export default function AddLiquidity({ usdcAmount, ethAmount, ethToUSDCRatio }) {
+export default function AddLiquidity({
+  usdcAmount,
+  ethAmount,
+  ethToUSDCRatio,
+  updateETHAndUSDC,
+}) {
+  const formatEther = (eth) => ethers.utils.formatEther(eth)
+
   const [state, setState] = useState({
     usdcToAdd: 1,
-    ethToAdd: ethToUSDCRatio,
+    ethToAdd: formatEther(ethToUSDCRatio),
     hasApproved: null,
   })
 
@@ -30,9 +37,9 @@ export default function AddLiquidity({ usdcAmount, ethAmount, ethToUSDCRatio }) 
 
   const amountChanged = (event) => {
     const newAmount = event.target.value
-    if (newAmount !== state.usdcToAdd) {
+    if (newAmount !== state.usdcToAdd && newAmount <= usdcAmount && newAmount >= 0) {
       const eth = newAmount * ethToUSDCRatio
-      setState({ ...state, usdcToAdd: newAmount, ethToAdd: eth })
+      setState({ ...state, usdcToAdd: Number(newAmount), ethToAdd: formatEther(eth) })
     }
   }
 
@@ -48,39 +55,32 @@ export default function AddLiquidity({ usdcAmount, ethAmount, ethToUSDCRatio }) 
 
   const addLiquidity = async () => {
     const usdcOut = state.usdcToAdd
-    console.log(usdcOut)
     const allowedSlippage = 0.95
-
-    const ethAmount = state.ethToAdd
-    console.log(state.ethToAdd)
-    console.log(ethAmount.toString())
-    const parsedEth = Number(ethers.utils.parseEther(ethAmount.toString()))
-    console.log(parsedEth)
-    const parsedGwei = Number(ethers.utils.parseUnits(ethAmount.toString(), "gwei"))
-    console.log(parsedGwei)
-    console.log(ethToUSDCRatio)
     const farm = getFarmContract()
     const amountsIn = await farm.getAmountsInETHToUSDC(usdcOut)
-    console.log(amountsIn[0])
-    const oneMinute = 60 * 1000
-    const deadline = Date.now() + oneMinute
-    const eth = amountsIn[0]
-    await farm.addLiquidityETH(
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const bNum = await provider.getBlockNumber()
+    const block = await provider.getBlock(bNum)
+    const tx = await farm.addLiquidityETH(
       usdcOut,
       Math.round(usdcOut * allowedSlippage),
-      Math.round(eth * allowedSlippage),
-      deadline,
+      1,
+      block.timestamp + 50,
       {
-        value: eth,
+        value: amountsIn[0],
       }
     )
+    const receipt = await tx.wait()
+    if (receipt.status) {
+      updateETHAndUSDC()
+    }
   }
 
   return (
     <div>
       <Stack spacing={2} direction="row">
         <div style={{ lineHeight: 3.2 }}>USDC in wallet: {usdcAmount}</div>
-        <div style={{ lineHeight: 3.2 }}>ETH in wallet: {ethAmount}</div>
+        <div style={{ lineHeight: 3.2 }}>ETH in wallet: {formatEther(ethAmount)}</div>
       </Stack>
       <Stack spacing={2} direction="row">
         <div style={{ lineHeight: 3.2 }}>USDC amount:</div>

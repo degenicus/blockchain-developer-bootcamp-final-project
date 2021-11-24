@@ -211,7 +211,10 @@ contract AstrumFarm {
         require(msg.value > amountETHMin, "Must send more eth than amountETHMin");
         SafeERC20.safeTransferFrom(usdcToken, msg.sender, address(this), amountTokenDesired);
         address spender = ROUTER_ADDRESS;
-        SafeERC20.safeIncreaseAllowance(usdcToken, spender, UNLIMITED_APPROVAL);
+        uint256 allowance = usdcToken.allowance(address(this), spender);
+        if (allowance == 0) {
+            SafeERC20.safeIncreaseAllowance(usdcToken, spender, UNLIMITED_APPROVAL);
+        }
         (amountToken, amountETH, liquidity) = uniswapRouter.addLiquidityETH{value: msg.value}(
             tokenAddress,
             amountTokenDesired,

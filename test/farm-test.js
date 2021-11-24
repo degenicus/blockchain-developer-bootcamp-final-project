@@ -137,4 +137,47 @@ describe("AstrumFarm", () => {
     const usdcBalanceAfter = Number(await usdc.balanceOf(owner.address))
     expect(usdcBalanceAfter).to.be.greaterThan(0)
   })
+  it("Can provide liquidity multiple times", async () => {
+    const farm = await deployFarm()
+
+    const usdcAmount = 100
+    const amountsIn = await farm.getAmountsInETHToUSDC(usdcAmount)
+
+    const delay = 1000
+    const deadline = getDeadline(delay)
+    await farm.swapETHForExactTokens(amountsIn[1], deadline, { value: amountsIn[0] })
+
+    const usdc = getUSDCContract()
+    await usdc.approve(farm.address, ethers.constants.MaxInt256)
+
+    const [owner] = await ethers.getSigners()
+    const balanceBefore = await farm.balances(owner.address)
+    expect(Number(balanceBefore)).to.equal(0)
+
+    const allowedSlippage = 0.95
+    const ethAmount = amountsIn[0]
+    await farm.addLiquidityETH(
+      usdcAmount,
+      Math.round(usdcAmount * allowedSlippage),
+      Math.round(ethAmount * allowedSlippage),
+      deadline,
+      { value: ethAmount }
+    )
+    const balanceAfter = await farm.balances(owner.address)
+    expect(Number(balanceAfter)).to.be.greaterThan(0)
+
+    const usdcAmount2 = 250
+    const amountsIn2 = await farm.getAmountsInETHToUSDC(usdcAmount2)
+    const ethAmount2 = amountsIn2[0]
+    await farm.swapETHForExactTokens(amountsIn2[1], deadline, { value: amountsIn2[0] })
+    await farm.addLiquidityETH(
+      usdcAmount2,
+      Math.round(usdcAmount2 * allowedSlippage),
+      Math.round(ethAmount * allowedSlippage),
+      deadline,
+      { value: ethAmount2 }
+    )
+    const balanceAfter2 = await farm.balances(owner.address)
+    expect(Number(balanceAfter2)).to.be.greaterThan(Number(balanceAfter))
+  })
 })
