@@ -4,7 +4,7 @@ import { ethers } from "ethers"
 import { MetamaskInfo } from "./components/MetamaskInfo"
 import FarmWrapper from "./components/FarmWrapper"
 
-const ROPSTEN_ID = 3
+const RINKEBY_ID = 4
 
 function App() {
   const [state, setState] = useState({
@@ -22,7 +22,7 @@ function App() {
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const signer = provider.getSigner()
         const network = await provider.getNetwork()
-        if (signer && network && network.chainId === ROPSTEN_ID) {
+        if (signer && network && network.chainId === RINKEBY_ID) {
           setState({ ...state, isMetaMaskDetected: true })
         }
       } catch (error) {}

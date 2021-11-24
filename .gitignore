@@ -15,6 +15,7 @@
 # production
 /build
 /src/artifacts
+/bin
 
 # misc
 .DS_Store

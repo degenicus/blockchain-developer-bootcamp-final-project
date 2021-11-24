@@ -1,22 +1,31 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.4;
+pragma solidity ^0.6.2;
 
-import "hardhat/console.sol";
 import {SafeERC20} from "../library/SafeERC20.sol";
 import {IERC20} from "../library/IERC20.sol";
 import {SafeMath} from "../library/SafeMath.sol";
 
-interface IUniswapV2Router02 {
-    function swapETHForExactTokens(
-        uint256 amountOut,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
-
-    function getAmountsIn(uint256 amountOut, address[] calldata path) external view returns (uint256[] memory amounts);
+interface IUniswapV2Router01 {
+    function factory() external pure returns (address);
 
     function WETH() external pure returns (address);
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    )
+        external
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 liquidity
+        );
 
     function addLiquidityETH(
         address token,
@@ -34,6 +43,16 @@ interface IUniswapV2Router02 {
             uint256 liquidity
         );
 
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB);
+
     function removeLiquidityETH(
         address token,
         uint256 liquidity,
@@ -42,46 +61,137 @@ interface IUniswapV2Router02 {
         address to,
         uint256 deadline
     ) external returns (uint256 amountToken, uint256 amountETH);
+
+    function removeLiquidityWithPermit(
+        address tokenA,
+        address tokenB,
+        uint256 liquidity,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline,
+        bool approveMax,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256 amountA, uint256 amountB);
+
+    function removeLiquidityETHWithPermit(
+        address token,
+        uint256 liquidity,
+        uint256 amountTokenMin,
+        uint256 amountETHMin,
+        address to,
+        uint256 deadline,
+        bool approveMax,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256 amountToken, uint256 amountETH);
+
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapTokensForExactTokens(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapExactETHForTokens(
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
+
+    function swapTokensForExactETH(
+        uint256 amountOut,
+        uint256 amountInMax,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapExactTokensForETH(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function swapETHForExactTokens(
+        uint256 amountOut,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external payable returns (uint256[] memory amounts);
+
+    function quote(
+        uint256 amountA,
+        uint256 reserveA,
+        uint256 reserveB
+    ) external pure returns (uint256 amountB);
+
+    function getAmountOut(
+        uint256 amountIn,
+        uint256 reserveIn,
+        uint256 reserveOut
+    ) external pure returns (uint256 amountOut);
+
+    function getAmountIn(
+        uint256 amountOut,
+        uint256 reserveIn,
+        uint256 reserveOut
+    ) external pure returns (uint256 amountIn);
+
+    function getAmountsOut(uint256 amountIn, address[] calldata path) external view returns (uint256[] memory amounts);
+
+    function getAmountsIn(uint256 amountOut, address[] calldata path) external view returns (uint256[] memory amounts);
 }
 
 contract AstrumFarm {
     using SafeMath for uint256;
     address private constant ROUTER_ADDRESS = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    // Ropsten compound USDC 0x07865c6E87B9F70255377e024ace6630C1Eaa37F
-    address private constant USDC_ADDRESS = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
-    address private constant USDC_ETH_LP_ADDRESS = 0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc;
     address private constant FACTORY = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
-    IUniswapV2Router02 private constant uniswapRouter = IUniswapV2Router02(ROUTER_ADDRESS);
-    IERC20 private constant usdcToken = IERC20(USDC_ADDRESS);
+    IUniswapV2Router01 public immutable uniswapRouter = IUniswapV2Router01(ROUTER_ADDRESS);
     uint256 constant UNLIMITED_APPROVAL = type(uint256).max;
     mapping(address => uint256) public balances;
     event AddLiquidity(address indexed _from, uint256 _liquidity, uint256 _amountToken, uint256 _amountETH);
     event RemoveLiquidity(address indexed _from, uint256 _liquidity, uint256 _amountToken, uint256 _amountETH);
+    address private immutable tokenAddress;
+    IERC20 private immutable astrumToken;
 
-    constructor() {}
-
-    function swapETHForExactTokens(uint256 usdcAmount, uint256 deadline) public payable {
-        address[] memory path = new address[](2);
-        path[0] = getWETHAddress();
-        path[1] = USDC_ADDRESS;
-        uniswapRouter.swapETHForExactTokens{value: msg.value}(usdcAmount, path, address(this), deadline);
-        SafeERC20.safeTransfer(usdcToken, msg.sender, usdcAmount);
+    constructor(address _tokenAddress) public {
+        tokenAddress = _tokenAddress;
+        astrumToken = IERC20(_tokenAddress);
     }
 
-    function getAmountsInETHToUSDC(uint256 usdcAmount) public view returns (uint256[] memory) {
+    function swapETHForExactTokens(uint256 astrumAmount, uint256 deadline) public payable {
         address[] memory path = new address[](2);
         path[0] = getWETHAddress();
-        path[1] = USDC_ADDRESS;
-        return uniswapRouter.getAmountsIn(usdcAmount, path);
+        path[1] = tokenAddress;
+        uniswapRouter.swapETHForExactTokens{value: msg.value}(astrumAmount, path, address(this), deadline);
+        SafeERC20.safeTransfer(astrumToken, msg.sender, astrumAmount);
     }
 
-    function getWETHAddress() public pure returns (address) {
+    function getAmountsInETHToAstrum(uint256 astrumAmount) public view returns (uint256[] memory) {
+        address[] memory path = new address[](2);
+        path[0] = getWETHAddress();
+        path[1] = tokenAddress;
+        return uniswapRouter.getAmountsIn(astrumAmount, path);
+    }
+
+    function getWETHAddress() public view returns (address) {
         return uniswapRouter.WETH();
-    }
-
-    function approve() public {
-        address spender = address(this);
-        SafeERC20.safeIncreaseAllowance(usdcToken, spender, UNLIMITED_APPROVAL); // Safely set unlimited allowance with USDC
     }
 
     function addLiquidityETH(
@@ -99,11 +209,11 @@ contract AstrumFarm {
         )
     {
         require(msg.value > amountETHMin, "Must send more eth than amountETHMin");
-        SafeERC20.safeTransferFrom(usdcToken, msg.sender, address(this), amountTokenDesired);
+        SafeERC20.safeTransferFrom(astrumToken, msg.sender, address(this), amountTokenDesired);
         address spender = ROUTER_ADDRESS;
-        SafeERC20.safeIncreaseAllowance(usdcToken, spender, UNLIMITED_APPROVAL);
+        SafeERC20.safeIncreaseAllowance(astrumToken, spender, UNLIMITED_APPROVAL);
         (amountToken, amountETH, liquidity) = uniswapRouter.addLiquidityETH{value: msg.value}(
-            USDC_ADDRESS,
+            tokenAddress,
             amountTokenDesired,
             amountTokenMin,
             amountETHMin,
@@ -124,21 +234,23 @@ contract AstrumFarm {
         require(balances[msg.sender] >= liquidity, "Attempting to withdraw over the balance for this account");
         balances[msg.sender] = balances[msg.sender].sub(liquidity);
         address spender = ROUTER_ADDRESS;
-        address lpAddress = getPairAddress(USDC_ADDRESS, getWETHAddress());
-        IERC20 usdcETHLPToken = IERC20(lpAddress);
-        SafeERC20.safeIncreaseAllowance(usdcETHLPToken, spender, UNLIMITED_APPROVAL);
-        (amountToken, amountETH) = uniswapRouter.removeLiquidityETH(USDC_ADDRESS, liquidity, amountTokenMin, amountETHMin, msg.sender, deadline);
+        address lpAddress = getPairAddress(tokenAddress, getWETHAddress());
+        IERC20 astrumETHLPToken = IERC20(lpAddress);
+        SafeERC20.safeIncreaseAllowance(astrumETHLPToken, spender, UNLIMITED_APPROVAL);
+        (amountToken, amountETH) = uniswapRouter.removeLiquidityETH(tokenAddress, liquidity, amountTokenMin, amountETHMin, msg.sender, deadline);
         emit RemoveLiquidity(msg.sender, liquidity, amountToken, amountETH);
         return (amountToken, amountETH);
     }
 
     function getPairAddress(address tokenA, address tokenB) internal pure returns (address) {
-        bytes32 keccak = keccak256(abi.encodePacked(
-            hex'ff',
-            FACTORY,
-            keccak256(abi.encodePacked(tokenA, tokenB)),
-            hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f'
-        ));
+        bytes32 keccak = keccak256(
+            abi.encodePacked(
+                hex"ff",
+                FACTORY,
+                keccak256(abi.encodePacked(tokenA, tokenB)),
+                hex"96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f"
+            )
+        );
         address pair = address(uint160(uint256(keccak)));
         return pair;
     }

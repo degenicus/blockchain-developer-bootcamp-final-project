@@ -18,7 +18,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.4",
+  solidity: "0.6.10",
   paths: {
     artifacts: "./src/artifacts",
   },
@@ -31,6 +31,10 @@ module.exports = {
     },
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.API_KEY}`,
+      accounts: [`${process.env.PRIVATE_KEY}`],
+    },
+    rinkeby: {
+      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: [`${process.env.PRIVATE_KEY}`],
     },
   },

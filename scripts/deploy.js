@@ -5,9 +5,12 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString())
 
+  const Token = await ethers.getContractFactory("AstrumToken")
+  const token = await Token.deploy()
   const Farm = await ethers.getContractFactory("AstrumFarm")
-  const farm = await Farm.deploy()
+  const farm = await Farm.deploy(token.address)
 
+  console.log("Token address:", token.address)
   console.log("Farm address:", farm.address)
 }
 
