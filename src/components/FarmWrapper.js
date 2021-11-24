@@ -6,16 +6,17 @@ import TabList from "@mui/lab/TabList"
 import TabPanel from "@mui/lab/TabPanel"
 import Swap from "./Swap"
 import AddLiquidity from "./AddLiquidity"
-import { getAstrumBalance } from "../helpers"
+import RemoveLiquidity from "./RemoveLiquidity"
+import { getUSDCBalance } from "../helpers"
 import { ethers } from "ethers"
 import { getFarmContract } from "../helpers"
 
 export default function FarmWrapper() {
   const [state, setState] = useState({
     tab: "1",
-    astrumAmount: null,
+    usdcAmount: null,
     ethAmount: null,
-    ethToAstrumRatio: null,
+    ethToUSDCRatio: null,
   })
 
   const handleChange = (event, newValue) => {
@@ -23,12 +24,12 @@ export default function FarmWrapper() {
   }
 
   useEffect(() => {
-    if (state.astrumAmount == null) {
-      async function fetchAstrumData() {
-        const balance = await getAstrumBalance()
-        setState({ ...state, astrumAmount: Number(balance) })
+    if (state.usdcAmount == null) {
+      async function fetchUSDCData() {
+        const balance = await getUSDCBalance()
+        setState({ ...state, usdcAmount: Number(balance) })
       }
-      fetchAstrumData()
+      fetchUSDCData()
     }
     if (state.ethAmount == null) {
       async function fetchETHData() {
@@ -42,21 +43,20 @@ export default function FarmWrapper() {
       }
       fetchETHData()
     }
-    if (state.ethToAstrumRatio == null) {
+    if (state.ethToUSDCRatio == null) {
       async function fetchRatioData() {
-        const astrumAmount = 1
+        const usdcAmount = 1
         const farmContract = getFarmContract()
-        const amountsIn = await farmContract.getAmountsInETHToAstrum(astrumAmount)
-        const formatted = ethers.utils.formatEther(amountsIn[0])
-        setState({ ...state, ethToAstrumRatio: Number(formatted) })
+        const amountsIn = await farmContract.getAmountsInETHToUSDC(usdcAmount)
+        setState({ ...state, ethToUSDCRatio: Number(amountsIn[0]) })
       }
       fetchRatioData()
     }
   })
 
-  const setAstrumAmount = async () => {
-    const newBalance = await getAstrumBalance()
-    setState({ ...state, astrumAmount: Number(newBalance) })
+  const setUSDCAmount = async () => {
+    const newBalance = await getUSDCBalance()
+    setState({ ...state, usdcAmount: Number(newBalance) })
   }
 
   return (
@@ -79,17 +79,19 @@ export default function FarmWrapper() {
           </TabList>
         </Box>
         <TabPanel value="1">
-          <Swap astrumAmount={state.astrumAmount} setAstrumAmount={setAstrumAmount} />
+          <Swap usdcAmount={state.usdcAmount} setUSDCAmount={setUSDCAmount} />
         </TabPanel>
         <TabPanel value="2">
           <AddLiquidity
-            astrumAmount={state.astrumAmount}
+            usdcAmount={state.usdcAmount}
             ethAmount={state.ethAmount}
-            setAstrumAmount={setAstrumAmount}
-            ethToAstrumRatio={0.00001}
+            setUSDCAmount={setUSDCAmount}
+            ethToUSDCRatio={state.ethToUSDCRatio}
           />
         </TabPanel>
-        <TabPanel value="3">Remove liquidity</TabPanel>
+        <TabPanel value="3">
+          <RemoveLiquidity usdcAmount={state.usdcAmount} ethAmount={state.ethAmount} />
+        </TabPanel>
       </TabContext>
     </Box>
   )
