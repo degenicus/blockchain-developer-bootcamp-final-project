@@ -168,26 +168,26 @@ contract AstrumFarm {
     event AddLiquidity(address indexed _from, uint256 _liquidity, uint256 _amountToken, uint256 _amountETH);
     event RemoveLiquidity(address indexed _from, uint256 _liquidity, uint256 _amountToken, uint256 _amountETH);
     address private immutable tokenAddress;
-    IERC20 private immutable astrumToken;
+    IERC20 private immutable usdcToken;
 
     constructor(address _tokenAddress) public {
         tokenAddress = _tokenAddress;
-        astrumToken = IERC20(_tokenAddress);
+        usdcToken = IERC20(_tokenAddress);
     }
 
-    function swapETHForExactTokens(uint256 astrumAmount, uint256 deadline) public payable {
+    function swapETHForExactTokens(uint256 usdcAmount, uint256 deadline) public payable {
         address[] memory path = new address[](2);
         path[0] = getWETHAddress();
         path[1] = tokenAddress;
-        uniswapRouter.swapETHForExactTokens{value: msg.value}(astrumAmount, path, address(this), deadline);
-        SafeERC20.safeTransfer(astrumToken, msg.sender, astrumAmount);
+        uniswapRouter.swapETHForExactTokens{value: msg.value}(usdcAmount, path, address(this), deadline);
+        SafeERC20.safeTransfer(usdcToken, msg.sender, usdcAmount);
     }
 
-    function getAmountsInETHToAstrum(uint256 astrumAmount) public view returns (uint256[] memory) {
+    function getAmountsInETHToUSDC(uint256 usdcAmount) public view returns (uint256[] memory) {
         address[] memory path = new address[](2);
         path[0] = getWETHAddress();
         path[1] = tokenAddress;
-        return uniswapRouter.getAmountsIn(astrumAmount, path);
+        return uniswapRouter.getAmountsIn(usdcAmount, path);
     }
 
     function getWETHAddress() public view returns (address) {
@@ -209,9 +209,9 @@ contract AstrumFarm {
         )
     {
         require(msg.value > amountETHMin, "Must send more eth than amountETHMin");
-        SafeERC20.safeTransferFrom(astrumToken, msg.sender, address(this), amountTokenDesired);
+        SafeERC20.safeTransferFrom(usdcToken, msg.sender, address(this), amountTokenDesired);
         address spender = ROUTER_ADDRESS;
-        SafeERC20.safeIncreaseAllowance(astrumToken, spender, UNLIMITED_APPROVAL);
+        SafeERC20.safeIncreaseAllowance(usdcToken, spender, UNLIMITED_APPROVAL);
         (amountToken, amountETH, liquidity) = uniswapRouter.addLiquidityETH{value: msg.value}(
             tokenAddress,
             amountTokenDesired,
@@ -235,8 +235,8 @@ contract AstrumFarm {
         balances[msg.sender] = balances[msg.sender].sub(liquidity);
         address spender = ROUTER_ADDRESS;
         address lpAddress = getPairAddress(tokenAddress, getWETHAddress());
-        IERC20 astrumETHLPToken = IERC20(lpAddress);
-        SafeERC20.safeIncreaseAllowance(astrumETHLPToken, spender, UNLIMITED_APPROVAL);
+        IERC20 usdcETHLPToken = IERC20(lpAddress);
+        SafeERC20.safeIncreaseAllowance(usdcETHLPToken, spender, UNLIMITED_APPROVAL);
         (amountToken, amountETH) = uniswapRouter.removeLiquidityETH(tokenAddress, liquidity, amountTokenMin, amountETHMin, msg.sender, deadline);
         emit RemoveLiquidity(msg.sender, liquidity, amountToken, amountETH);
         return (amountToken, amountETH);
