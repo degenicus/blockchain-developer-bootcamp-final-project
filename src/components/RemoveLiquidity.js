@@ -5,24 +5,24 @@ import Stack from "@mui/material/Stack"
 import { ethers } from "ethers"
 import { getFarmContract } from "../helpers"
 
-export default function RemoveLiquidity({ usdcAmount, ethAmount }) {
+export default function RemoveLiquidity({ usdcAmount, ethAmount, updateETHAndUSDC }) {
   const [state, setState] = useState({
     balanceLP: null,
     amountLPToRemove: 0,
   })
 
+  const updateBalanceLP = async () => {
+    const farm = getFarmContract()
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const signer = provider.getSigner()
+    const userAddress = await signer.getAddress()
+    const balanceLP = Number(await farm.balances(userAddress))
+    setState({ ...state, balanceLP })
+  }
+
   useEffect(() => {
     if (state.balanceLP == null) {
-      async function fetchBalanceLP() {
-        const farm = getFarmContract()
-        const provider = new ethers.providers.Web3Provider(window.ethereum)
-        const signer = provider.getSigner()
-        const userAddress = await signer.getAddress()
-        const balanceLP = Number(await farm.balances(userAddress))
-        console.log()
-        setState({ ...state, balanceLP })
-      }
-      fetchBalanceLP()
+      updateBalanceLP()
     }
   })
 
@@ -39,7 +39,12 @@ export default function RemoveLiquidity({ usdcAmount, ethAmount }) {
     const oneMinute = 60 * 1000
     const deadline = Date.now() + oneMinute
     const farm = getFarmContract()
-    await farm.removeLiquidityETH(toRemove, 0, 0, deadline)
+    const tx = await farm.removeLiquidityETH(toRemove, 0, 0, deadline)
+    const receipt = await tx.wait()
+    if (receipt.status) {
+      updateETHAndUSDC()
+      updateBalanceLP()
+    }
   }
 
   const formatEther = (eth) => ethers.utils.formatEther(eth)

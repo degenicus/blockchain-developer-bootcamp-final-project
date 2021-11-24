@@ -97,7 +97,11 @@ export default function FarmWrapper() {
           />
         </TabPanel>
         <TabPanel value="3">
-          <RemoveLiquidity usdcAmount={state.usdcAmount} ethAmount={state.ethAmount} />
+          <RemoveLiquidity
+            usdcAmount={state.usdcAmount}
+            ethAmount={state.ethAmount}
+            updateETHAndUSDC={updateETHAndUSDC}
+          />
         </TabPanel>
       </TabContext>
     </Box>

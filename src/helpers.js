@@ -20,7 +20,7 @@ export const getETHBalance = async () => {
 }
 
 export const getFarmContract = () => {
-  const farmAddress = "0x412e796F6A3a9CD8a008E1f3Dc78dd482c819CAf"
+  const farmAddress = "0x2dD44Ad3A8fa197183CA578E87A2B89A41507F1D"
   const provider = new ethers.providers.Web3Provider(window.ethereum)
   const signer = provider.getSigner()
   const farmContract = new ethers.Contract(farmAddress, AstrumFarmABI, signer)
