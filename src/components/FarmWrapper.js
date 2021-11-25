@@ -68,11 +68,7 @@ export default function FarmWrapper() {
   return (
     <Box
       sx={{
-        width: "50%",
         typography: "body1",
-        top: "30%",
-        left: "28%",
-        position: "absolute",
         bgcolor: "#80d8ff",
       }}
     >

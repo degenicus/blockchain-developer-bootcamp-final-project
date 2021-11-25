@@ -14,9 +14,6 @@ export const MetamaskInfo = () => {
       sx={{
         minWidth: 275,
         bgcolor: "#80d8ff",
-        top: "30%",
-        left: "28%",
-        position: "absolute",
       }}
     >
       <CardContent>

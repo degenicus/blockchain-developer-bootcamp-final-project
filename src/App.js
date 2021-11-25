@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react"
 import { ethers } from "ethers"
 import { MetamaskInfo } from "./components/MetamaskInfo"
 import FarmWrapper from "./components/FarmWrapper"
+import Grid from "@mui/material/Grid"
 
 const RINKEBY_ID = 4
 
@@ -31,7 +32,18 @@ function App() {
 
   return (
     <div className="App">
-      {!state.isMetaMaskDetected ? <MetamaskInfo /> : <FarmWrapper />}
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        style={{ minHeight: "100vh" }}
+      >
+        <Grid item xs={3}>
+          {!state.isMetaMaskDetected ? <MetamaskInfo /> : <FarmWrapper />}
+        </Grid>
+      </Grid>
     </div>
   )
 }
