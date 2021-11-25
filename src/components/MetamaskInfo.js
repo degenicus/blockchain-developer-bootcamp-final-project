@@ -21,9 +21,9 @@ export const MetamaskInfo = () => {
     >
       <CardContent>
         <Typography variant="body2" theme={theme}>
-          You must connect to the site with Metamask on the Ropsten network.
+          You must connect to the site with Metamask on the Rinkeby network.
           <br />
-          If you switch networks then refresh the website with Ropsten selected.
+          If you switch networks then refresh the website with Rinkeby selected.
         </Typography>
       </CardContent>
     </Card>
