@@ -4,6 +4,7 @@ pragma solidity =0.6.10;
 import {SafeERC20} from "../library/SafeERC20.sol";
 import {IERC20} from "../library/IERC20.sol";
 import {SafeMath} from "../library/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);
@@ -161,15 +162,18 @@ interface IUniswapV2Router01 {
 /// @title Astrum Farm
 /// @author Magnus Brantheim
 /// @notice Supports basic Uniswap functionality through V2
-contract AstrumFarm {
+contract AstrumFarm is Ownable {
     using SafeMath for uint256;
     address private constant ROUTER_ADDRESS = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
     address private constant FACTORY = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
     IUniswapV2Router01 public immutable uniswapRouter = IUniswapV2Router01(ROUTER_ADDRESS);
     uint256 constant UNLIMITED_APPROVAL = type(uint256).max;
     mapping(address => uint256) public balances;
-    address private immutable tokenAddress;
-    IERC20 private immutable usdcToken;
+    address private tokenAddress;
+    IERC20 private usdcToken;
+    address private astrumTokenAddress;
+    IERC20 private astrumToken;
+    bool private shouldAirdrop = false;
 
     /// @notice Signals the add liquidity event
     /// @dev Currently not used but could be used by front-end
@@ -189,9 +193,12 @@ contract AstrumFarm {
 
     /// @notice Instantiates the USDC token used, could be any ERC20 token on Uniswap
     /// @param _tokenAddress The token address to be used, may change depending on the deployed network
-    constructor(address _tokenAddress) public {
+    /// @param _astrumTokenAddress The address of the AstrumToken used for reward airdrops
+    constructor(address _tokenAddress, address _astrumTokenAddress) public {
         tokenAddress = _tokenAddress;
         usdcToken = IERC20(_tokenAddress);
+        astrumTokenAddress = _astrumTokenAddress;
+        astrumToken = IERC20(_astrumTokenAddress);
     }
 
     /// @notice Swaps ETH for USDC using the uniswap router
@@ -259,6 +266,12 @@ contract AstrumFarm {
         );
         balances[msg.sender] = balances[msg.sender].add(liquidity);
         emit AddLiquidity(msg.sender, liquidity, amountToken, amountETH);
+        if (shouldAirdrop) {
+            uint256 contractTokenBalance = astrumToken.balanceOf(address(this));
+            if (contractTokenBalance > amountToken) {
+                SafeERC20.safeTransfer(astrumToken, msg.sender, amountToken);
+            }
+        }
         return (amountToken, amountETH, liquidity);
     }
 
@@ -285,6 +298,13 @@ contract AstrumFarm {
         (amountToken, amountETH) = uniswapRouter.removeLiquidityETH(tokenAddress, liquidity, amountTokenMin, amountETHMin, msg.sender, deadline);
         emit RemoveLiquidity(msg.sender, liquidity, amountToken, amountETH);
         return (amountToken, amountETH);
+    }
+
+    /// @notice Allows the contract owner to trigger airdrops of token
+    /// @param _shouldAirdrop A bool that sets if the contract airdrops tokens to users
+    function setShouldAirdrop(bool _shouldAirdrop) public onlyOwner {
+        require(shouldAirdrop != _shouldAirdrop, "Setting to the same value");
+        shouldAirdrop = _shouldAirdrop;
     }
 
     /// @notice Programmatically determines the address for the LP token for any given pair,

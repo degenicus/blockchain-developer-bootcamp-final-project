@@ -38,11 +38,28 @@ const resetBlockchain = async () => {
   })
 }
 
-const deployFarm = async () => {
+const deployFarm = async (astrumToken) => {
   const Farm = await ethers.getContractFactory("AstrumFarm")
-  const farm = await Farm.deploy("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+  const usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+  const farm = await Farm.deploy(usdc, astrumToken)
   await farm.deployed()
   return farm
+}
+
+const deployAstrumToken = async () => {
+  const Token = await ethers.getContractFactory("AstrumToken")
+  const token = await Token.deploy()
+  await token.deployed()
+  return token
+}
+
+const deployContracts = async () => {
+  const astrumToken = await deployAstrumToken()
+  const farm = await deployFarm(astrumToken.address)
+  return {
+    astrumToken,
+    farm,
+  }
 }
 
 describe("AstrumFarm", () => {
@@ -55,7 +72,7 @@ describe("AstrumFarm", () => {
   be tested for but it should return an array with two values.
   */
   it("Should return amounts in for swapping eth to USDC", async () => {
-    const farm = await deployFarm()
+    const { farm } = await deployContracts()
 
     const amountsIn = await farm.getAmountsInETHToUSDC(100)
     expect(amountsIn).to.be.an("array")
@@ -65,7 +82,7 @@ describe("AstrumFarm", () => {
   Should be able to decide a USDC amount to swap to, swap and then receive the expected USDC amount in the wallet.
   */
   it("Should swap ETH for USDC", async () => {
-    const farm = await deployFarm()
+    const { farm } = await deployContracts()
 
     const usdcAmount = 100
     const amountsIn = await farm.getAmountsInETHToUSDC(usdcAmount)
@@ -87,7 +104,7 @@ describe("AstrumFarm", () => {
   is that the users balance goes from 0 to a positive number.
   */
   it("Can provide liquidity", async () => {
-    const farm = await deployFarm()
+    const { farm } = await deployContracts()
 
     const usdcAmount = 100
     const amountsIn = await farm.getAmountsInETHToUSDC(usdcAmount)
@@ -120,7 +137,7 @@ describe("AstrumFarm", () => {
   removing that liquidity and getting USDC + ETH back.
   */
   it("Can remove liquidity", async () => {
-    const farm = await deployFarm()
+    const { farm } = await deployContracts()
 
     const usdcAmount = 100
     const amountsIn = await farm.getAmountsInETHToUSDC(usdcAmount)
@@ -161,7 +178,7 @@ describe("AstrumFarm", () => {
   this case and made sure the if(allowance == 0) check had worked to prevent the overflow.
   */
   it("Can provide liquidity multiple times", async () => {
-    const farm = await deployFarm()
+    const { farm } = await deployContracts()
 
     const usdcAmount = 100
     const amountsIn = await farm.getAmountsInETHToUSDC(usdcAmount)
@@ -202,5 +219,58 @@ describe("AstrumFarm", () => {
     )
     const balanceAfter2 = await farm.balances(owner.address)
     expect(Number(balanceAfter2)).to.be.greaterThan(Number(balanceAfter))
+  })
+  /*
+  This tests that the owner can set shouldAirdrop to true which will trigger an airdrop
+  on each AddLiquidity for the USDC amount added, if the contract has enough tokens to send
+   */
+  it("Owner can trigger airdrop of AstrumToken to AddLiquidity users", async () => {
+    const { farm, astrumToken } = await deployContracts()
+
+    await astrumToken.transfer(farm.address, 1_000_000)
+    await farm.setShouldAirdrop(true)
+
+    const [owner, user] = await ethers.getSigners()
+    const userFarm = farm.connect(user)
+
+    const usdcAmount = 100
+    const amountsIn = await userFarm.getAmountsInETHToUSDC(usdcAmount)
+
+    const delay = 1000
+    const deadline = getDeadline(delay)
+    await userFarm.swapETHForExactTokens(amountsIn[1], deadline, {
+      value: amountsIn[0],
+    })
+
+    const usdc = getUSDCContract()
+    const userUSDC = usdc.connect(user)
+    await userUSDC.approve(farm.address, ethers.constants.MaxInt256)
+
+    const balanceBefore = await userFarm.balances(user.address)
+    const astrumBalanceBefore = await astrumToken.balanceOf(user.address)
+    expect(Number(balanceBefore)).to.equal(0)
+    expect(Number(astrumBalanceBefore)).to.equal(0)
+
+    const allowedSlippage = 0.95
+    const ethAmount = amountsIn[0]
+    await userFarm.addLiquidityETH(
+      usdcAmount,
+      Math.round(usdcAmount * allowedSlippage),
+      Math.round(ethAmount * allowedSlippage),
+      deadline,
+      { value: ethAmount }
+    )
+    const balanceAfter = await userFarm.balances(user.address)
+    const astrumBalanceAfter = await astrumToken.balanceOf(user.address)
+    expect(Number(balanceAfter)).to.be.greaterThan(0)
+    expect(Number(astrumBalanceAfter)).to.equal(usdcAmount)
+  })
+
+  it("Only Owner can trigger airdrop", async () => {
+    const { farm, astrumToken } = await deployContracts()
+
+    const [owner, user] = await ethers.getSigners()
+    const userFarm = farm.connect(user)
+    expect(userFarm.setShouldAirdrop(true)).to.be.reverted
   })
 })
