@@ -29,12 +29,8 @@ module.exports = {
         blockNumber: 13596490,
       },
     },
-    ropsten: {
-      url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.API_KEY}`,
-      accounts: [`${process.env.PRIVATE_KEY}`],
-    },
     rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      url: `https://eth-rinkeby.alchemyapi.io/v2/QfYjE5ap0ywfvBU66pqT73xz_6keJG4j`,
       accounts: [`${process.env.PRIVATE_KEY}`],
     },
   },
