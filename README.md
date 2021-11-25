@@ -14,6 +14,8 @@ http://m-brantheim.github.io/AstrumFarm
 ### Contracts
 
 - Run `yarn install` in project root to install Hardhat, Ethers, React, Chai, Waffle etc
+- Make sure your .env file contains a PRIVATE_KEY variable with a string value, might not need to be a real private key since the hardhat
+  deploy is on a fork of mainnet but some value is needed or hardhat will throw errors
 - Run a mainnet fork in order to test using the mainnet deployed versions of Uniswap + USDC
 - `npx hardhat node` <- This forks mainnet using my alchemy API key, Alchemy support archive nodes which is needed for forking mainnet.
 - `npx hardhat test --network localhost` <- This tests using the localhost mainnet fork blockchain
