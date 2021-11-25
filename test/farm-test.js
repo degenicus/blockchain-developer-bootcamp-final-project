@@ -49,6 +49,11 @@ describe("AstrumFarm", () => {
   beforeEach(async () => {
     await resetBlockchain()
   })
+  /*
+  getAmountsInETHToUSDC is needed to determine prices for swapping and adding liquidity
+  Since the tests are running from a mainnet fork the exact prices are not known and cannot
+  be tested for but it should return an array with two values.
+  */
   it("Should return amounts in for swapping eth to USDC", async () => {
     const farm = await deployFarm()
 
@@ -56,6 +61,9 @@ describe("AstrumFarm", () => {
     expect(amountsIn).to.be.an("array")
     expect(amountsIn.length).equals(2)
   })
+  /*
+  Should be able to decide a USDC amount to swap to, swap and then receive the expected USDC amount in the wallet.
+  */
   it("Should swap ETH for USDC", async () => {
     const farm = await deployFarm()
 
@@ -72,6 +80,12 @@ describe("AstrumFarm", () => {
     const usdcBalanceAfter = await getUSDCBalance(owner.address)
     expect(Number(usdcBalanceAfter)).equals(usdcAmount)
   })
+  /*
+  Should be able to decide a USDC amount to add liquidity for, send in USDC+ETH and have
+  the smart contract increase the balance of LP tokens for the user. Since it is not known
+  how many LP tokens are received it cannot be tested for an exact amount. The expected result
+  is that the users balance goes from 0 to a positive number.
+  */
   it("Can provide liquidity", async () => {
     const farm = await deployFarm()
 
@@ -101,6 +115,10 @@ describe("AstrumFarm", () => {
     const balanceAfter = await farm.balances(owner.address)
     expect(Number(balanceAfter)).to.be.greaterThan(0)
   })
+  /*
+  Tests a more complex flow of first swapping to get USDC, then adding liquidity with USDC-ETH and finally
+  removing that liquidity and getting USDC + ETH back.
+  */
   it("Can remove liquidity", async () => {
     const farm = await deployFarm()
 
@@ -137,6 +155,11 @@ describe("AstrumFarm", () => {
     const usdcBalanceAfter = Number(await usdc.balanceOf(owner.address))
     expect(usdcBalanceAfter).to.be.greaterThan(0)
   })
+  /*
+  This tests that liquidity can be added many times. For a while this was not possible
+  because the allowance was increased on each call, causing an overflow. This test covers
+  this case and made sure the if(allowance == 0) check had worked to prevent the overflow.
+  */
   it("Can provide liquidity multiple times", async () => {
     const farm = await deployFarm()
 
