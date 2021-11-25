@@ -59,10 +59,10 @@ The app in it's current state does not offer any advantage compared to directly 
 ```
 PRIVATE_KEY = "Your private key here"
 ```
+This variable must be on the process.env variable. I use a .env file which is added to Gitignore to keep the key private.
 
 ## TODO features
 
--Autocompounding (selling of reward token and buyback of LP token + reinvesting at a scheduled interval)
 -Display of estimated daily, weekly, yearly yield
 -A custom farm token with emission as a boosted reward
 -Zap feature that takes one token, for example ETH, swaps into equal halves required for LP token and conversion to LP token all in one step for the user
