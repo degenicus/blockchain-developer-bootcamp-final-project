@@ -2,7 +2,7 @@
 
 ## Deployed version url:
 
-http://m-brantheim.github.io/AstrumFarm
+https://m-brantheim.github.io/blockchain-developer-bootcamp-final-project/
 
 ## How to run this project locally:
 
@@ -28,7 +28,7 @@ http://m-brantheim.github.io/AstrumFarm
 
 ## Screencast link
 
-Link to come.
+https://www.loom.com/share/c276772bcd5a447cb43daff69ed872d4
 
 ## Public Ethereum wallet for certification:
 
