@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.6.2;
+pragma solidity =0.6.10;
 
 import {SafeERC20} from "../library/SafeERC20.sol";
 import {IERC20} from "../library/IERC20.sol";
@@ -161,7 +161,6 @@ interface IUniswapV2Router01 {
 /// @title Astrum Farm
 /// @author Magnus Brantheim
 /// @notice Supports basic Uniswap functionality through V2
-/// @custom:experimental This is an experimental contract. It has security vulnerabilities so should not be deployed live.
 contract AstrumFarm {
     using SafeMath for uint256;
     address private constant ROUTER_ADDRESS = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
