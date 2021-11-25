@@ -158,6 +158,10 @@ interface IUniswapV2Router01 {
     function getAmountsIn(uint256 amountOut, address[] calldata path) external view returns (uint256[] memory amounts);
 }
 
+/// @title Astrum Farm
+/// @author Magnus Brantheim
+/// @notice Supports basic Uniswap functionality through V2
+/// @custom:experimental This is an experimental contract. It has security vulnerabilities so should not be deployed live.
 contract AstrumFarm {
     using SafeMath for uint256;
     address private constant ROUTER_ADDRESS = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
@@ -165,16 +169,35 @@ contract AstrumFarm {
     IUniswapV2Router01 public immutable uniswapRouter = IUniswapV2Router01(ROUTER_ADDRESS);
     uint256 constant UNLIMITED_APPROVAL = type(uint256).max;
     mapping(address => uint256) public balances;
-    event AddLiquidity(address indexed _from, uint256 _liquidity, uint256 _amountToken, uint256 _amountETH);
-    event RemoveLiquidity(address indexed _from, uint256 _liquidity, uint256 _amountToken, uint256 _amountETH);
     address private immutable tokenAddress;
     IERC20 private immutable usdcToken;
 
+    /// @notice Signals the add liquidity event
+    /// @dev Currently not used but could be used by front-end
+    /// @param _from The address of msg.sender
+    /// @param _liquidity The amount of LP tokens minted
+    /// @param _amountToken The amount of token used
+    /// @param _amountETH The amount of ETH used
+    event AddLiquidity(address indexed _from, uint256 _liquidity, uint256 _amountToken, uint256 _amountETH);
+
+    /// @notice Signals the remove liquidity event
+    /// @dev Currently not used but could be used by front-end
+    /// @param _from The address of msg.sender
+    /// @param _liquidity The amount of LP tokens burned
+    /// @param _amountToken The amount of token received
+    /// @param _amountETH The amount of ETH received
+    event RemoveLiquidity(address indexed _from, uint256 _liquidity, uint256 _amountToken, uint256 _amountETH);
+
+    /// @notice Instantiates the USDC token used, could be any ERC20 token on Uniswap
+    /// @param _tokenAddress The token address to be used, may change depending on the deployed network
     constructor(address _tokenAddress) public {
         tokenAddress = _tokenAddress;
         usdcToken = IERC20(_tokenAddress);
     }
 
+    /// @notice Swaps ETH for USDC using the uniswap router
+    /// @param usdcAmount How much USDC to swap for
+    /// @param deadline The block timestamp to cancel transaction on
     function swapETHForExactTokens(uint256 usdcAmount, uint256 deadline) public payable {
         address[] memory path = new address[](2);
         path[0] = getWETHAddress();
@@ -183,6 +206,8 @@ contract AstrumFarm {
         SafeERC20.safeTransfer(usdcToken, msg.sender, usdcAmount);
     }
 
+    /// @notice Gets the amounts of USDC and ETH for swapping or adding liquidity
+    /// @param usdcAmount How much USDC
     function getAmountsInETHToUSDC(uint256 usdcAmount) public view returns (uint256[] memory) {
         address[] memory path = new address[](2);
         path[0] = getWETHAddress();
@@ -190,10 +215,17 @@ contract AstrumFarm {
         return uniswapRouter.getAmountsIn(usdcAmount, path);
     }
 
+    /// @notice Convenience function get WETH address
     function getWETHAddress() public view returns (address) {
         return uniswapRouter.WETH();
     }
 
+    /// @notice Adds liquidity for USDC-WETH
+    /// @dev Can be sandwich attacked if only "getAmountsInETHToUSDC" is used to determine price
+    /// @param amountTokenDesired How many USDC tokens to add liquidity for
+    /// @param amountTokenMin Sets a limit for slippage for USDC
+    /// @param amountETHMin Sets a limit for slippage for ETH
+    /// @param deadline Cancels transaction if deadline is reached
     function addLiquidityETH(
         uint256 amountTokenDesired,
         uint256 amountTokenMin,
@@ -228,6 +260,11 @@ contract AstrumFarm {
         return (amountToken, amountETH, liquidity);
     }
 
+    /// @notice Removes liquidity for USDC-WETH
+    /// @param liquidity How many LP tokens to remove liquidity for
+    /// @param amountTokenMin Sets a limit for slippage for USDC
+    /// @param amountETHMin Sets a limit for slippage for ETH
+    /// @param deadline Cancels transaction if deadline is reached
     function removeLiquidityETH(
         uint256 liquidity,
         uint256 amountTokenMin,
@@ -248,6 +285,10 @@ contract AstrumFarm {
         return (amountToken, amountETH);
     }
 
+    /// @notice Programmatically determines the address for the LP token for any given pair,
+    /// this greatly simplifies not having to know the LP token address on testnets
+    /// @param tokenA First token address
+    /// @param tokenB Second token address
     function getPairAddress(address tokenA, address tokenB) internal pure returns (address) {
         bytes32 keccak = keccak256(
             abi.encodePacked(
@@ -261,5 +302,6 @@ contract AstrumFarm {
         return pair;
     }
 
+    /// @notice Fallback for payments
     receive() external payable {}
 }
