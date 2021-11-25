@@ -67,10 +67,25 @@ This variable must be on the process.env variable. I use a .env file which is ad
 ## TODO features
 
 -Display of estimated daily, weekly, yearly yield
+
 -A custom farm token with emission as a boosted reward
+
 -Zap feature that takes one token, for example ETH, swaps into equal halves required for LP token and conversion to LP token all in one step for the user
+
 -Extra farm info like TVL, your share of farm etc
 
 ## Inspiration
 
--https://www.reaper.farm/ -https://app.beefy.finance/#/fantom -https://spookyswap.finance/farms -https://app.spiritswap.finance/#/farms -https://solfarm.io/vaults -https://terra.spec.finance/vaults -https://www.tarot.to/
+-https://www.reaper.farm/ 
+
+-https://app.beefy.finance/#/fantom 
+
+-https://spookyswap.finance/farms 
+
+-https://app.spiritswap.finance/#/farms 
+
+-https://solfarm.io/vaults 
+
+-https://terra.spec.finance/vaults 
+
+-https://www.tarot.to/
