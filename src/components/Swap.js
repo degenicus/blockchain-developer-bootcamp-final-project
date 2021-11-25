@@ -2,12 +2,22 @@ import React, { useState } from "react"
 import TextField from "@mui/material/TextField"
 import Button from "@mui/material/Button"
 import Stack from "@mui/material/Stack"
-import { getFarmContract } from "../helpers"
+import { getFarmContract, onSuccess, onError } from "../helpers"
+import Toast from "./Toast"
 
 export default function Swap({ usdcAmount, setUSDCAmount }) {
   const [state, setState] = useState({
     swapUSDCAmount: 0,
+    isToastOpen: false,
+    toastSeverity: "success",
+    toastMessage: "Swapped successfully!",
   })
+
+  const setToastOpen = (isOpen) => {
+    if (isOpen !== state.isToastOpen) {
+      setState({ ...state, isToastOpen: isOpen })
+    }
+  }
 
   const amountChanged = (event) => {
     const newAmount = event.target.value
@@ -17,17 +27,22 @@ export default function Swap({ usdcAmount, setUSDCAmount }) {
   }
 
   const swapToUSDC = async () => {
-    const amount = Number(state.swapUSDCAmount)
-    const farmContract = getFarmContract()
-    const amountsIn = await farmContract.getAmountsInETHToUSDC(amount)
-    const oneMinute = 60 * 1000
-    const deadline = Date.now() + oneMinute
-    const tx = await farmContract.swapETHForExactTokens(amount, deadline, {
-      value: amountsIn[0],
-    })
-    const receipt = await tx.wait()
-    if (receipt.status) {
-      setUSDCAmount()
+    try {
+      const amount = Number(state.swapUSDCAmount)
+      const farmContract = getFarmContract()
+      const amountsIn = await farmContract.getAmountsInETHToUSDC(amount)
+      const oneMinute = 60 * 1000
+      const deadline = Date.now() + oneMinute
+      const tx = await farmContract.swapETHForExactTokens(amount, deadline, {
+        value: amountsIn[0],
+      })
+      const receipt = await tx.wait()
+      if (receipt.status) {
+        setUSDCAmount()
+        onSuccess("Swapped successfully!", state, setState)
+      }
+    } catch (error) {
+      onError("Something went wrong, try swapping a different amount!", state, setState)
     }
   }
   return (
@@ -49,6 +64,13 @@ export default function Swap({ usdcAmount, setUSDCAmount }) {
           Swap
         </Button>
       </Stack>
+      <Toast
+        alertSeverity={state.toastSeverity}
+        alertMessage={state.toastMessage}
+        open={state.isToastOpen}
+        setOpen={setToastOpen}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </div>
   )
 }

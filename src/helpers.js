@@ -34,3 +34,21 @@ export const getUSDCContract = () => {
   const tokenContract = new ethers.Contract(tokenAddress, ERC20ABI, signer)
   return tokenContract
 }
+
+export const onSuccess = (toastMessage, state, setState) => {
+  setState({
+    ...state,
+    isToastOpen: true,
+    toastSeverity: "success",
+    toastMessage,
+  })
+}
+
+export const onError = (toastMessage, state, setState) => {
+  setState({
+    ...state,
+    isToastOpen: true,
+    toastSeverity: "error",
+    toastMessage,
+  })
+}

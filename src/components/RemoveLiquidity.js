@@ -3,13 +3,23 @@ import TextField from "@mui/material/TextField"
 import Button from "@mui/material/Button"
 import Stack from "@mui/material/Stack"
 import { ethers } from "ethers"
-import { getFarmContract } from "../helpers"
+import { getFarmContract, onSuccess, onError } from "../helpers"
+import Toast from "./Toast"
 
 export default function RemoveLiquidity({ usdcAmount, ethAmount, updateETHAndUSDC }) {
   const [state, setState] = useState({
     balanceLP: null,
     amountLPToRemove: 0,
+    isToastOpen: false,
+    toastSeverity: "success",
+    toastMessage: "Swapped successfully!",
   })
+
+  const setToastOpen = (isOpen) => {
+    if (isOpen !== state.isToastOpen) {
+      setState({ ...state, isToastOpen: isOpen })
+    }
+  }
 
   const updateBalanceLP = async () => {
     const farm = getFarmContract()
@@ -35,15 +45,20 @@ export default function RemoveLiquidity({ usdcAmount, ethAmount, updateETHAndUSD
   }
 
   const removeLiquidity = async () => {
-    const toRemove = state.amountLPToRemove
-    const oneMinute = 60 * 1000
-    const deadline = Date.now() + oneMinute
-    const farm = getFarmContract()
-    const tx = await farm.removeLiquidityETH(toRemove, 0, 0, deadline)
-    const receipt = await tx.wait()
-    if (receipt.status) {
-      updateETHAndUSDC()
-      updateBalanceLP()
+    try {
+      const toRemove = state.amountLPToRemove
+      const oneMinute = 60 * 1000
+      const deadline = Date.now() + oneMinute
+      const farm = getFarmContract()
+      const tx = await farm.removeLiquidityETH(toRemove, 0, 0, deadline)
+      const receipt = await tx.wait()
+      if (receipt.status) {
+        updateETHAndUSDC()
+        updateBalanceLP()
+        onSuccess("Remove liquidity succeeded!", state, setState)
+      }
+    } catch (error) {
+      onError("Remove liquidity failed! Try a different amount.", state, setState)
     }
   }
 
@@ -74,6 +89,13 @@ export default function RemoveLiquidity({ usdcAmount, ethAmount, updateETHAndUSD
           Remove liquidity
         </Button>
       </Stack>
+      <Toast
+        alertSeverity={state.toastSeverity}
+        alertMessage={state.toastMessage}
+        open={state.isToastOpen}
+        setOpen={setToastOpen}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </div>
   )
 }

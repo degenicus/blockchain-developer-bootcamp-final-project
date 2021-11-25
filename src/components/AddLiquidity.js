@@ -3,7 +3,8 @@ import TextField from "@mui/material/TextField"
 import Button from "@mui/material/Button"
 import Stack from "@mui/material/Stack"
 import { ethers } from "ethers"
-import { getUSDCBalance, getUSDCContract, getFarmContract } from "../helpers"
+import { getUSDCContract, getFarmContract, onSuccess, onError } from "../helpers"
+import Toast from "./Toast"
 
 export default function AddLiquidity({
   usdcAmount,
@@ -17,6 +18,9 @@ export default function AddLiquidity({
     usdcToAdd: 1,
     ethToAdd: formatEther(ethToUSDCRatio),
     hasApproved: null,
+    isToastOpen: false,
+    toastSeverity: "success",
+    toastMessage: "Swapped successfully!",
   })
 
   useEffect(() => {
@@ -35,6 +39,12 @@ export default function AddLiquidity({
     }
   })
 
+  const setToastOpen = (isOpen) => {
+    if (isOpen !== state.isToastOpen) {
+      setState({ ...state, isToastOpen: isOpen })
+    }
+  }
+
   const amountChanged = (event) => {
     const newAmount = event.target.value
     if (newAmount !== state.usdcToAdd && newAmount <= usdcAmount && newAmount >= 0) {
@@ -44,35 +54,45 @@ export default function AddLiquidity({
   }
 
   const approve = async () => {
-    const farm = getFarmContract()
-    const usdc = getUSDCContract()
-    const tx = await usdc.approve(farm.address, ethers.constants.MaxInt256)
-    const receipt = await tx.wait()
-    if (receipt.status) {
-      setState({ ...state, hasApproved: true })
+    try {
+      const farm = getFarmContract()
+      const usdc = getUSDCContract()
+      const tx = await usdc.approve(farm.address, ethers.constants.MaxInt256)
+      const receipt = await tx.wait()
+      if (receipt.status) {
+        setState({ ...state, hasApproved: true })
+        onSuccess("Approve successful!", state, setState)
+      }
+    } catch (error) {
+      onError("Approve failed!", state, setState)
     }
   }
 
   const addLiquidity = async () => {
-    const usdcOut = state.usdcToAdd
-    const allowedSlippage = 0.95
-    const farm = getFarmContract()
-    const amountsIn = await farm.getAmountsInETHToUSDC(usdcOut)
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    const bNum = await provider.getBlockNumber()
-    const block = await provider.getBlock(bNum)
-    const tx = await farm.addLiquidityETH(
-      usdcOut,
-      Math.round(usdcOut * allowedSlippage),
-      1,
-      block.timestamp + 50,
-      {
-        value: amountsIn[0],
+    try {
+      const usdcOut = state.usdcToAdd
+      const allowedSlippage = 0.95
+      const farm = getFarmContract()
+      const amountsIn = await farm.getAmountsInETHToUSDC(usdcOut)
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const bNum = await provider.getBlockNumber()
+      const block = await provider.getBlock(bNum)
+      const tx = await farm.addLiquidityETH(
+        usdcOut,
+        Math.round(usdcOut * allowedSlippage),
+        1,
+        block.timestamp + 50,
+        {
+          value: amountsIn[0],
+        }
+      )
+      const receipt = await tx.wait()
+      if (receipt.status) {
+        updateETHAndUSDC()
+        onSuccess("Add liquidity succeeded!", state, setState)
       }
-    )
-    const receipt = await tx.wait()
-    if (receipt.status) {
-      updateETHAndUSDC()
+    } catch (error) {
+      onError("Add liquidity failed! Try a different amount.", state, setState)
     }
   }
 
@@ -108,6 +128,13 @@ export default function AddLiquidity({
           Add liquidity
         </Button>
       </Stack>
+      <Toast
+        alertSeverity={state.toastSeverity}
+        alertMessage={state.toastMessage}
+        open={state.isToastOpen}
+        setOpen={setToastOpen}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </div>
   )
 }
