@@ -198,6 +198,7 @@ contract AstrumFarm {
     /// @param usdcAmount How much USDC to swap for
     /// @param deadline The block timestamp to cancel transaction on
     function swapETHForExactTokens(uint256 usdcAmount, uint256 deadline) public payable {
+        require(usdcAmount > 0, "Most swap for a positive amount");
         address[] memory path = new address[](2);
         path[0] = getWETHAddress();
         path[1] = tokenAddress;
@@ -208,6 +209,7 @@ contract AstrumFarm {
     /// @notice Gets the amounts of USDC and ETH for swapping or adding liquidity
     /// @param usdcAmount How much USDC
     function getAmountsInETHToUSDC(uint256 usdcAmount) public view returns (uint256[] memory) {
+        require(usdcAmount > 0, "Most use a positive amount");
         address[] memory path = new address[](2);
         path[0] = getWETHAddress();
         path[1] = tokenAddress;
@@ -240,6 +242,7 @@ contract AstrumFarm {
         )
     {
         require(msg.value > amountETHMin, "Must send more eth than amountETHMin");
+        require(amountTokenDesired > 0, "Must add liquidity for a positive amount");
         SafeERC20.safeTransferFrom(usdcToken, msg.sender, address(this), amountTokenDesired);
         address spender = ROUTER_ADDRESS;
         uint256 allowance = usdcToken.allowance(address(this), spender);
